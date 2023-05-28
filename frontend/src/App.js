@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect, useReducer, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Route, Routes } from "react-router-dom";
 import io from "socket.io-client";
 import CreatePostPopup from "./components/createPostPopup";
@@ -14,9 +14,58 @@ import Profile from "./pages/profile";
 import Reset from "./pages/reset";
 import LoggedInRoutes from "./routes/LoggedInRoutes";
 import NotLoggedInRoutes from "./routes/NotLoggedInRoutes";
+import Cookies from "js-cookie";
+
+const SocketWrapper = ({ children, setShowChatBox, countMessage }) => {
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => ({ ...state }));
+
+  const getMessage = async (userId) => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/getMessage/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
+      );
+      dispatch({
+        type: "CHAT",
+        payload: {
+          recipient: user.friends.find((friend) => friend._id === userId),
+          messages: [...data],
+        },
+      });
+    } catch (error) {}
+  };
+
+  useEffect(() => {
+    if (user?.socket) {
+      user.socket.on("receiveMessage", (sender) => {
+        getMessage(sender);
+        countMessage();
+        // setShowChatBox(true);
+      });
+    }
+  }, [user?.socket]);
+
+  useEffect(() => {
+    if (user) {
+      const socket = io("http://localhost:8000");
+      socket.emit("joinUser", user);
+      dispatch({
+        type: "SOCKET",
+        payload: socket,
+      });
+      return () => socket.close();
+    }
+  }, []);
+
+  return children;
+};
 
 function App() {
-  const [socket, setSocket] = useState();
   const [visible, setVisible] = useState(false);
   const { user, darkTheme } = useSelector((state) => ({ ...state }));
   const [showChatBox, setShowChatBox] = useState(false);
@@ -25,19 +74,30 @@ function App() {
     posts: [],
     error: "",
   });
-  useEffect(() => {
-    getAllPosts();
-  }, []);
+  const dispatchUser = useDispatch();
+
+  const getMe = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/me`,
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
+      );
+      dispatchUser({
+        type: "UPDATE_USER",
+        payload: { ...data },
+      });
+    } catch (error) {}
+  };
 
   useEffect(() => {
-    const initSocket = io("http://localhost:8000").connect();
-    setSocket(initSocket);
-    if (user) {
-      console.log(initSocket);
-      initSocket.emit("joinUser", user.id);
-    }
-    return initSocket.close();
-  }, [user]);
+    getAllPosts();
+    getMe();
+    countMessage();
+  }, []);
 
   const getAllPosts = async () => {
     try {
@@ -63,68 +123,90 @@ function App() {
       });
     }
   };
+
+  const countMessage = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/countUnRead`,
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
+      );
+      dispatchUser({ type: "COUNT_MESSAGE", payload: Number(data) || 0 });
+    } catch (error) {}
+  };
+
   return (
-    <div className={darkTheme && "dark"}>
-      {visible && (
-        <CreatePostPopup
-          user={user}
-          setVisible={setVisible}
-          posts={posts}
-          dispatch={dispatch}
-        />
-      )}
-      <Routes>
-        <Route element={<LoggedInRoutes />}>
-          <Route
-            path="/profile"
-            element={
-              <Profile setVisible={setVisible} getAllPosts={getAllPosts} />
-            }
-            exact
+    <SocketWrapper countMessage={countMessage} setShowChatBox={setShowChatBox}>
+      <div className={darkTheme ? "dark" : ""}>
+        {visible && (
+          <CreatePostPopup
+            user={user}
+            setVisible={setVisible}
+            posts={posts}
+            dispatch={dispatch}
           />
-          <Route
-            path="/profile/:username"
-            element={
-              <Profile setVisible={setVisible} getAllPosts={getAllPosts} />
-            }
-            exact
+        )}
+        <Routes>
+          <Route element={<LoggedInRoutes />}>
+            <Route
+              path="/profile"
+              element={
+                <Profile setVisible={setVisible} getAllPosts={getAllPosts} />
+              }
+              exact
+            />
+            <Route
+              path="/profile/:username"
+              element={
+                <Profile setVisible={setVisible} getAllPosts={getAllPosts} />
+              }
+              exact
+            />
+            <Route
+              path="/friends"
+              element={
+                <Friends setVisible={setVisible} getAllPosts={getAllPosts} />
+              }
+              exact
+            />
+            <Route
+              path="/friends/:type"
+              element={
+                <Friends setVisible={setVisible} getAllPosts={getAllPosts} />
+              }
+              exact
+            />
+            <Route
+              path="/"
+              element={
+                <Home
+                  setVisible={setVisible}
+                  posts={posts}
+                  loading={loading}
+                  getAllPosts={getAllPosts}
+                  setShowChatBox={setShowChatBox}
+                />
+              }
+              exact
+            />
+            <Route path="/activate/:token" element={<Activate />} exact />
+          </Route>
+          <Route element={<NotLoggedInRoutes />}>
+            <Route path="/login" element={<Login />} exact />
+          </Route>
+          <Route path="/reset" element={<Reset />} />
+        </Routes>
+        {showChatBox && (
+          <ChatBox
+            countMessage={countMessage}
+            setShowChatBox={setShowChatBox}
           />
-          <Route
-            path="/friends"
-            element={
-              <Friends setVisible={setVisible} getAllPosts={getAllPosts} />
-            }
-            exact
-          />
-          <Route
-            path="/friends/:type"
-            element={
-              <Friends setVisible={setVisible} getAllPosts={getAllPosts} />
-            }
-            exact
-          />
-          <Route
-            path="/"
-            element={
-              <Home
-                setVisible={setVisible}
-                posts={posts}
-                loading={loading}
-                getAllPosts={getAllPosts}
-                setShowChatBox={setShowChatBox}
-              />
-            }
-            exact
-          />
-          <Route path="/activate/:token" element={<Activate />} exact />
-        </Route>
-        <Route element={<NotLoggedInRoutes />}>
-          <Route path="/login" element={<Login />} exact />
-        </Route>
-        <Route path="/reset" element={<Reset />} />
-      </Routes>
-      {showChatBox && <ChatBox setShowChatBox={setShowChatBox} />}
-    </div>
+        )}
+      </div>
+    </SocketWrapper>
   );
 }
 

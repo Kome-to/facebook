@@ -29,7 +29,7 @@ export default function UserMenu({ user }) {
               <span>See your profile</span>
             </div>
           </Link>
-          <div className="mmenu_splitter"></div>
+          {/* <div className="mmenu_splitter"></div>
           <div className="mmenu_main hover3">
             <div className="small_circle">
               <i className="report_filled_icon"></i>
@@ -67,7 +67,7 @@ export default function UserMenu({ user }) {
             <div className="rArrow">
               <i className="right_icon"></i>
             </div>
-          </div>
+          </div> */}
           <div
             className="mmenu_item hover3"
             onClick={() => {

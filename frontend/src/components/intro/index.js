@@ -167,12 +167,12 @@ export default function Intro({ detailss, visitor, setOthername }) {
         />
       )}
 
-      {!visitor && (
+      {/* {!visitor && (
         <button className="gray_btn hover1 w100">Add Hobbies</button>
       )}
       {!visitor && (
         <button className="gray_btn hover1 w100">Add Featured</button>
-      )}
+      )} */}
     </div>
   );
 }

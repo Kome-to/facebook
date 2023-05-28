@@ -2,7 +2,7 @@ import { Formik, Form } from "formik";
 import { Link } from "react-router-dom";
 import * as Yup from "yup";
 import LoginInput from "../../components/inputs/loginInput";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DotLoader from "react-spinners/DotLoader";
 import axios from "axios";
 import { useDispatch } from "react-redux";
@@ -28,6 +28,7 @@ export default function LoginForm({ setVisible }) {
       .max(100),
     password: Yup.string().required("Password is required"),
   });
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const loginSubmit = async () => {
@@ -40,10 +41,11 @@ export default function LoginForm({ setVisible }) {
           password,
         }
       );
-      dispatch({ type: "LOGIN", payload: data });
-      console.log(data);
+      // dispatch({ type: "LOGIN", payload: data });
       Cookies.set("user", JSON.stringify(data));
       navigate("/");
+      window.location.reload();
+      // console.log(data);
     } catch (error) {
       setLoading(false);
       setError(error.response.data.message);

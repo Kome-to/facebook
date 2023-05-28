@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import useClickOutside from "../../helpers/clickOutside";
 import {
@@ -34,6 +34,7 @@ export default function Header({ page, getAllPosts, setShowChatBox }) {
   const usermenu = useRef(null);
   const notify = useRef(null);
   const chat = useRef(null);
+  const dispatch = useDispatch();
   useClickOutside(allmenu, () => {
     setShowAllMenu(false);
   });
@@ -43,9 +44,27 @@ export default function Header({ page, getAllPosts, setShowChatBox }) {
   useClickOutside(chat, () => {
     setShowChat(false);
   });
-  useClickOutside(notify, async () => {
+  useClickOutside(notify, () => {
     setShowNotify(false);
   });
+
+  const readAllMessage = async (id) => {
+    try {
+      await axios.put(
+        `${process.env.REACT_APP_BACKEND_URL}/readAll`,
+        { id },
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
+      );
+      dispatch({
+        type: "COUNT_MESSAGE",
+        payload: user.countMessage === 0 ? 0 : user.countMessage - 1 || 0,
+      });
+    } catch (error) {}
+  };
 
   const [notifyList, setNotifyList] = useState([]);
 
@@ -128,7 +147,7 @@ export default function Header({ page, getAllPosts, setShowChatBox }) {
         >
           {page === "friends" ? <FriendsActive /> : <Friends color={color} />}
         </Link>
-        <Link to="/" className="middle_icon hover1">
+        {/* <Link to="/" className="middle_icon hover1">
           <Watch color={color} />
           <div className="middle_notification">9+</div>
         </Link>
@@ -137,7 +156,7 @@ export default function Header({ page, getAllPosts, setShowChatBox }) {
         </Link>
         <Link to="/" className="middle_icon hover1 ">
           <Gaming color={color} />
-        </Link>
+        </Link> */}
       </div>
       <div className="header_right">
         <Link
@@ -175,10 +194,19 @@ export default function Header({ page, getAllPosts, setShowChatBox }) {
           >
             <Messenger />
           </div>
+          {user.countMessage ? (
+            <div
+              style={{ transform: "translateY(2px)" }}
+              className="right_notification"
+            >
+              {user.countMessage}
+            </div>
+          ) : null}
           {showChat && (
             <ChatList
               setShowChat={setShowChat}
               setShowChatBox={setShowChatBox}
+              readAllMessage={readAllMessage}
             />
           )}
         </div>

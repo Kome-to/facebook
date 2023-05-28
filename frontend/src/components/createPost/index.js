@@ -16,7 +16,8 @@ export default function CreatePost({ user, setVisible, profile }) {
         </div>
       </div>
       <div className="create_splitter"></div>
-      <div className="createPost_body">
+      {/* <div>CreatePost</div> */}
+      {/* <div className="createPost_body">
         <div className="createPost_icon hover1">
           <LiveVideo color="#f3425f" />
           Live Video
@@ -36,7 +37,7 @@ export default function CreatePost({ user, setVisible, profile }) {
             Feeling/Activity
           </div>
         )}
-      </div>
+      </div> */}
     </div>
   );
 }

@@ -25,12 +25,18 @@ const {
   getSearchHistory,
   removeFromSearch,
   getFriendsPageInfos,
+  createMessage,
+  me,
+  getMessage,
+  countUnRead,
+  readAll,
 } = require("../controllers/user");
 const { authUser } = require("../middlwares/auth");
 
 const router = express.Router();
 
 router.post("/register", register);
+router.get("/me", authUser, me);
 router.post("/activate", authUser, activateAccount);
 router.post("/login", login);
 router.post("/sendVerification", authUser, sendVerification);
@@ -54,5 +60,9 @@ router.put("/addToSearchHistory", authUser, addToSearchHistory);
 router.get("/getSearchHistory", authUser, getSearchHistory);
 router.put("/removeFromSearch", authUser, removeFromSearch);
 router.get("/getFriendsPageInfos", authUser, getFriendsPageInfos);
+router.post("/createMessage", authUser, createMessage);
+router.get("/getMessage/:id", authUser, getMessage);
+router.get("/countUnRead", authUser, countUnRead);
+router.put("/readAll", authUser, readAll);
 
 module.exports = router;

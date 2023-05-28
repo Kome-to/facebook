@@ -5,6 +5,7 @@ const fileUpload = require("express-fileupload");
 const { readdirSync } = require("fs");
 const dotenv = require("dotenv");
 const SocketServer = require("./sockerServer");
+const { Server } = require("socket.io");
 
 dotenv.config();
 
@@ -16,19 +17,6 @@ app.use(
     useTempFiles: true,
   })
 );
-const http = require("http").createServer(app);
-const { Server } = require("socket.io");
-
-const io = new Server(http, {
-  cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"],
-  },
-});
-
-io.on("connection", (socket) => {
-  SocketServer(socket);
-});
 
 app.get("/health-check", (req, res) => {
   return res.json("ok");
@@ -43,6 +31,19 @@ mongoose
   })
   .then(() => console.log("database connected successfully"))
   .catch((err) => console.log("error connecting to mongodb", err));
+
+const http = require("http").createServer(app);
+
+const io = new Server(http, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
+});
+
+io.on("connection", (socket) => {
+  SocketServer(socket);
+});
 
 const PORT = process.env.PORT || 8000;
 http.listen(PORT, () => {

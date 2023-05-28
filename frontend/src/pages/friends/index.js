@@ -82,7 +82,7 @@ export default function Friends() {
                 <i className="right_icon"></i>
               </div>
             </Link>
-            <div className="mmenu_item hover3">
+            <Link to="/friends/suggest" className="mmenu_item hover3">
               <div className="small_circle">
                 <i className="friends_suggestions_icon"></i>
               </div>
@@ -90,7 +90,7 @@ export default function Friends() {
               <div className="rArrow">
                 <i className="right_icon"></i>
               </div>
-            </div>
+            </Link>
             <Link
               to="/friends/all"
               className={`mmenu_item hover3 ${
@@ -185,6 +185,29 @@ export default function Friends() {
               <div className="flex_wrap">
                 {data.friends &&
                   data.friends.map((user) => (
+                    <Card
+                      userr={user}
+                      key={user._id}
+                      type="friends"
+                      getData={getData}
+                    />
+                  ))}
+              </div>
+            </div>
+          )}
+          {(type === undefined || type === "suggest") && (
+            <div className="friends_right_wrap">
+              <div className="friends_left_header">
+                <h3>Suggestions</h3>
+                {type === undefined && (
+                  <Link to="/friends/suggest" className="see_link hover3">
+                    See all
+                  </Link>
+                )}
+              </div>
+              <div className="flex_wrap">
+                {data.suggests &&
+                  data.suggests.map((user) => (
                     <Card
                       userr={user}
                       key={user._id}

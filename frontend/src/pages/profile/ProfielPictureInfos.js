@@ -73,10 +73,10 @@ export default function ProfielPictureInfos({
             <img src="../../../icons/plus.png" alt="" className="invert" />
             <span>Add to story</span>
           </div>
-          <div className="gray_btn">
+          {/* <div className="gray_btn">
             <i className="edit_icon"></i>
             <span>Edit profile</span>
-          </div>
+          </div> */}
         </div>
       )}
     </div>

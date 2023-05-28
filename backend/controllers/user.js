@@ -6,6 +6,7 @@ const {
 const User = require("../models/User");
 const Post = require("../models/Post");
 const Code = require("../models/Code");
+const Message = require("../models/Message");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const cloudinary = require("cloudinary");
@@ -143,6 +144,29 @@ exports.login = async (req, res) => {
       last_name: user.last_name,
       token: token,
       verified: user.verified,
+      friends: user.friends,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.me = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate(
+      "friends",
+      "_id first_name last_name picture"
+    );
+    const token = generateToken({ id: user._id.toString() }, "7d");
+    return res.json({
+      id: user._id,
+      username: user.username,
+      picture: user.picture,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      token: token,
+      verified: user.verified,
+      friends: user.friends,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -606,12 +630,98 @@ exports.getFriendsPageInfos = async (req, res) => {
       .populate("requests", "first_name last_name picture username");
     const sentRequests = await User.find({
       requests: mongoose.Types.ObjectId(req.user.id),
-    }).select("first_name last_name picture username");
+    }).select("id first_name last_name picture username");
+
+    const requestIds = user.requests.map((request) => request.id);
+    const sendIds = sentRequests.map((send) => send.id);
+
+    const suggests = await User.find({
+      _id: {
+        $nin: [
+          ...user.friends.map((friend) => friend._id.toString()),
+          req.user.id,
+          requestIds.concat(sendIds),
+        ],
+      },
+    });
     res.json({
       friends: user.friends,
       requests: user.requests,
       sentRequests,
+      suggests,
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.createMessage = async (req, res) => {
+  try {
+    const { recipient, msg, media, call } = req.body;
+    const sender = await User.findById(req.user.id);
+    await Message.updateMany(
+      {
+        sender: recipient,
+        recipient: req.user.id,
+      },
+      { isRead: true }
+    );
+    const message = await new Message({
+      recipient,
+      sender,
+      text: msg,
+      media,
+      call,
+    }).save();
+    return res.json(message);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getMessage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const message = await Message.find({
+      $or: [
+        { sender: req.user.id, recipient: id },
+        { sender: id, recipient: req.user.id },
+      ],
+    }).sort({ createdAt: 1 });
+    return res.json(message);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.countUnRead = async (req, res) => {
+  try {
+    const messages = await Message.find({
+      recipient: req.user.id,
+      isRead: false,
+    });
+    const count = messages
+      .map((message) => message.sender.toString())
+      .filter((value, index, array) => {
+        return array.indexOf(value) === index;
+      }).length;
+    return res.json(count);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.readAll = async (req, res) => {
+  try {
+    const { id } = req.body;
+    const message = await Message.updateMany(
+      {
+        sender: id,
+        recipient: req.user.id,
+      },
+      { isRead: true }
+    );
+    return res.json({ status: "Success" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

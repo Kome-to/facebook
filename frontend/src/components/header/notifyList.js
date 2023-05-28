@@ -12,9 +12,9 @@ const NotifyList = ({ notifyList, getAllNotify }) => {
       <div className="chat-list__header">
         <div className="chat-list__chat-text">Notifications</div>
       </div>
-      {notifyList.map((chat) => {
+      {notifyList.map((chat, i) => {
         return (
-          <div className="chat-list__message notify-list__item">
+          <div key={i} className="chat-list__message notify-list__item">
             <div>
               <img
                 className="chat-list__picture"

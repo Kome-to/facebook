@@ -95,12 +95,12 @@ export default function Post({ post, user, profile }) {
             </div>
           </div>
         </Link>
-        <div
+        {/* <div
           className="post_header_right hover1"
           onClick={() => setShowMenu((prev) => !prev)}
         >
           <Dots color="#828387" />
-        </div>
+        </div> */}
       </div>
       {post.background ? (
         <div
