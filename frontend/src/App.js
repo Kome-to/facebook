@@ -134,21 +134,7 @@ function App() {
           },
         }
       );
-      dispatchUser({ type: "COUNT_MESSAGE", payload: Number(data) || 0 });
-    } catch (error) {}
-  };
-
-  const test = async () => {
-    try {
-      const { data } = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/countUnRead`,
-        {
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        }
-      );
-      dispatchUser({ type: "COUNT_MESSAGE", payload: Number(data) || 0 });
+      dispatchUser({ type: "1111COUNT_MESSAGE", payload: Number(data) || 0 });
     } catch (error) {}
   };
 
